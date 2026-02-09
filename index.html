@@ -435,11 +435,11 @@
                     <span id="user-role-badge" class="px-2 py-0.5 text-[10px] rounded-full bg-slate-200 text-slate-600 hidden md:inline">User</span>
                 </div>
                 
-                <button id="btn-admin-panel" onclick="openUserManagement()" class="text-xs bg-violet-100 text-violet-700 px-3 py-1 rounded hover:bg-violet-200 hidden font-bold md:inline-block" style="display:none;">
+                <button id="btn-admin-panel" onclick="openUserManagement()" class="text-xs bg-violet-100 text-violet-700 px-3 py-1 rounded hover:bg-violet-200 hidden font-bold">
                     <i class="fa-solid fa-users-gear mr-1"></i><span class="hidden md:inline">จัดการสมาชิก</span>
                 </button>
                 
-                <button onclick="openAssetManager()" id="btn-asset-panel" class="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded hover:bg-purple-200 hidden font-bold md:inline-block" style="display:none;">
+                <button onclick="openAssetManager()" id="btn-asset-panel" class="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded hover:bg-purple-200 hidden font-bold">
                     <i class="fa-solid fa-gear mr-1"></i><span class="hidden md:inline">เครื่องจักร</span>
                 </button>
 
@@ -639,12 +639,17 @@
         <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-[85vh] flex flex-col">
             <div class="flex justify-between items-center mb-4 border-b pb-2 dark:border-slate-700">
                 <h3 class="text-xl font-bold text-slate-800 dark:text-white"><i class="fa-solid fa-users-gear mr-2 text-violet-500"></i>จัดการสมาชิก</h3>
-                <button onclick="closeModal('modal-users')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"><i class="fa-solid fa-xmark"></i></button>
+                <button onclick="closeModal('modal-users')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="flex-1 overflow-auto">
                 <table class="w-full text-left text-sm border-collapse">
                     <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold sticky top-0 z-10">
-                        <tr><th class="p-3 border-b dark:border-slate-700">ชื่อผู้ใช้</th><th class="p-3 border-b dark:border-slate-700">ชื่อ-นามสกุล</th><th class="p-3 border-b dark:border-slate-700">สิทธิ์ (Role)</th></tr>
+                        <tr>
+                            <th class="p-3 border-b dark:border-slate-700">ชื่อผู้ใช้</th>
+                            <th class="p-3 border-b dark:border-slate-700">ชื่อ-นามสกุล</th>
+                            <th class="p-3 border-b dark:border-slate-700">สิทธิ์ (Role)</th>
+                            <th class="p-3 border-b dark:border-slate-700 text-center w-16">ลบ</th>
+                        </tr>
                     </thead>
                     <tbody id="user-list-body" class="divide-y divide-slate-100 dark:divide-slate-700"></tbody>
                 </table>
@@ -849,24 +854,39 @@
     </div>
 
     <div id="modal-asset-manager" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <h3 class="text-lg font-bold mb-4 dark:text-white">จัดการเครื่องจักร</h3>
-            <div class="space-y-3">
-                <input type="text" id="manage-asset-id" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-white" placeholder="รหัสเครื่อง (เช่น MC-01)">
-                <input type="text" id="manage-asset-name" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-white" placeholder="ชื่อเครื่อง">
-                <div>
-                    <label class="text-xs font-bold text-slate-500 block mb-1">เพิ่มรูปภาพใหม่:</label>
-                    <input type="file" id="asset-upload-images" accept="image/*" multiple class="w-full text-xs">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-3xl p-6 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 border-b pb-3 dark:border-slate-700">
+                <h3 class="text-lg font-bold dark:text-white"><i class="fa-solid fa-gear mr-2 text-purple-500"></i>จัดการเครื่องจักร</h3>
+                <button onclick="closeModal('modal-asset-manager')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-500"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="flex border-b border-slate-200 dark:border-slate-700 mb-4">
+                <button onclick="switchAssetTab('edit')" id="asset-tab-edit" class="flex-1 py-2.5 text-sm font-bold text-purple-600 border-b-2 border-purple-600 bg-purple-50 dark:bg-slate-800/50 dark:text-purple-400 dark:border-purple-400 transition-all"><i class="fa-solid fa-pen-to-square mr-1"></i>แก้ไขเครื่องปัจจุบัน</button>
+                <button onclick="switchAssetTab('add')" id="asset-tab-add" class="flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all"><i class="fa-solid fa-plus mr-1"></i>เพิ่มเครื่องใหม่</button>
+            </div>
+            <div id="asset-view-edit" class="flex-1 overflow-y-auto space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-xs font-bold text-slate-500 block mb-1">รหัสเครื่อง</label><input type="text" id="manage-asset-id" class="w-full border rounded-lg px-3 py-2 text-sm bg-slate-50 dark:bg-slate-800 dark:text-white" readonly></div>
+                    <div><label class="text-xs font-bold text-slate-500 block mb-1">ชื่อเครื่อง</label><input type="text" id="manage-asset-name" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-white"></div>
                 </div>
-                <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
-                    <div class="text-xs font-bold text-yellow-800 dark:text-yellow-400 mb-2">🗑️ ลบรูปภาพ (ระบุลำดับรูปที่ต้องการลบ)</div>
-                    <input type="text" id="delete-image-indices" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-white" placeholder="เช่น: 0, 2 (เริ่มนับรูปแรกที่ 0)">
-                    <button onclick="deleteSelectedImages()" class="mt-2 px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs hover:bg-red-700"><i class="fa-solid fa-trash mr-1"></i>ลบรูปที่เลือก</button>
+                <div>
+                    <label class="text-xs font-bold text-slate-500 block mb-2">📷 รูปภาพเครื่องจักร (<span id="asset-img-count">0</span> รูป)</label>
+                    <div id="asset-image-gallery" class="grid grid-cols-3 md:grid-cols-4 gap-2 max-h-[200px] overflow-y-auto border rounded-lg p-2 bg-slate-50 dark:bg-slate-800">
+                        <div class="text-center text-slate-400 text-xs col-span-full py-4">ไม่มีรูปภาพ</div>
+                    </div>
+                </div>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">เพิ่มรูปภาพใหม่:</label><input type="file" id="asset-upload-images" accept="image/*" multiple class="w-full text-xs"></div>
+                <div class="flex gap-2">
+                    <button onclick="saveAssetConfig()" class="flex-1 px-4 py-2.5 rounded-lg text-sm bg-purple-600 text-white hover:bg-purple-700 font-bold"><i class="fa-solid fa-save mr-1"></i>บันทึก</button>
+                    <button onclick="confirmDeleteAsset()" class="px-4 py-2.5 rounded-lg text-sm bg-red-600 text-white hover:bg-red-700 font-bold"><i class="fa-solid fa-trash mr-1"></i>ลบเครื่องนี้</button>
                 </div>
             </div>
-            <div class="flex justify-end gap-2 mt-4">
-                <button onclick="closeModal('modal-asset-manager')" class="px-4 py-2 rounded-lg text-sm bg-slate-100 hover:bg-slate-200">ยกเลิก</button>
-                <button onclick="saveAssetConfig()" class="px-4 py-2 rounded-lg text-sm bg-purple-600 text-white hover:bg-purple-700">บันทึก</button>
+            <div id="asset-view-add" class="flex-1 overflow-y-auto space-y-4 hidden">
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-xs font-bold text-slate-500 block mb-1">รหัสเครื่อง (ใหม่)</label><input type="text" id="new-asset-id" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-white" placeholder="เช่น MC-02"></div>
+                    <div><label class="text-xs font-bold text-slate-500 block mb-1">ชื่อเครื่อง</label><input type="text" id="new-asset-name" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-white" placeholder="ชื่อเครื่องจักร"></div>
+                </div>
+                <div><label class="text-xs font-bold text-slate-500 block mb-1">รูปภาพเครื่องจักร:</label><input type="file" id="new-asset-images" accept="image/*" multiple class="w-full text-xs"></div>
+                <button onclick="addNewAsset()" class="w-full px-4 py-2.5 rounded-lg text-sm bg-emerald-600 text-white hover:bg-emerald-700 font-bold"><i class="fa-solid fa-plus mr-1"></i>เพิ่มเครื่องจักรใหม่</button>
             </div>
         </div>
     </div>
@@ -965,8 +985,39 @@
         } catch (e) { console.error('Delete err:', e); }
     }
 
+    // ==========================================
+    // 📢 LINE Notify + Telegram
+    // ==========================================
+    const LINE_NOTIFY_TOKEN = ''; // ← ใส่ LINE Notify Token ที่นี่
+
+    async function sendToLine(message, imageUrl) {
+        if (!LINE_NOTIFY_TOKEN) return; // ไม่ส่งถ้าไม่มี token
+        try {
+            const formData = new URLSearchParams();
+            formData.append('message', message);
+            if (imageUrl) {
+                formData.append('imageThumbnail', imageUrl);
+                formData.append('imageFullsize', imageUrl);
+            }
+            await fetch('https://notify-api.line.me/api/notify', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': 'Bearer ' + LINE_NOTIFY_TOKEN
+                },
+                body: formData.toString()
+            });
+        } catch (e) { console.warn('LINE Notify:', e); }
+    }
+
     async function sendToTelegram(message, imageUrl) {
         try { await fetch('/api/telegram', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message, imageUrl }) }); } catch (e) { console.warn('Telegram:', e); }
+    }
+
+    // ส่งแจ้งเตือนทุกช่องทาง
+    async function sendNotification(message, imageUrl) {
+        sendToTelegram(message, imageUrl);
+        sendToLine(message, imageUrl);
     }
 
     let currentImgIndex = 0;
@@ -1184,11 +1235,9 @@ async function handleForgotPassword() {
         } catch (e) { toggleLoading(false); alert("Load Failed: " + e); }
     }
 
-    // --- บีบอัดรูปก่อน upload: resize max 1200px, JPEG quality 0.7 ---
-    // ลดจาก ~4-8MB เหลือ ~100-300KB
-    const IMG_MAX_SIZE = 1200; // px (ด้านยาวสุด)
-    const IMG_QUALITY = 0.7;   // JPEG quality (0.0 - 1.0)
-
+    // --- บีบอัดรูปก่อน upload ---
+    const IMG_MAX_SIZE = 1200;
+    const IMG_QUALITY = 0.7;
     function compressImage(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -1197,35 +1246,15 @@ async function handleForgotPassword() {
                 const img = new Image();
                 img.onerror = () => reject(new Error('Image load failed'));
                 img.onload = () => {
-                    let w = img.width;
-                    let h = img.height;
-
-                    // Resize ถ้าด้านใดด้านหนึ่งเกิน max
+                    let w = img.width, h = img.height;
                     if (w > IMG_MAX_SIZE || h > IMG_MAX_SIZE) {
-                        if (w > h) {
-                            h = Math.round(h * IMG_MAX_SIZE / w);
-                            w = IMG_MAX_SIZE;
-                        } else {
-                            w = Math.round(w * IMG_MAX_SIZE / h);
-                            h = IMG_MAX_SIZE;
-                        }
+                        if (w > h) { h = Math.round(h * IMG_MAX_SIZE / w); w = IMG_MAX_SIZE; }
+                        else { w = Math.round(w * IMG_MAX_SIZE / h); h = IMG_MAX_SIZE; }
                     }
-
                     const canvas = document.createElement('canvas');
-                    canvas.width = w;
-                    canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, w, h);
-
-                    // แปลงเป็น JPEG เสมอ (ประหยัดกว่า PNG มาก)
-                    const compressed = canvas.toDataURL('image/jpeg', IMG_QUALITY);
-                    
-                    // Log ขนาดที่ประหยัดได้
-                    const originalKB = Math.round(e.target.result.length * 0.75 / 1024);
-                    const compressedKB = Math.round(compressed.length * 0.75 / 1024);
-                    console.log(`📦 Compress: ${originalKB}KB → ${compressedKB}KB (${img.width}x${img.height} → ${w}x${h})`);
-
-                    resolve(compressed);
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', IMG_QUALITY));
                 };
                 img.src = e.target.result;
             };
@@ -1233,7 +1262,6 @@ async function handleForgotPassword() {
         });
     }
 
-    // convertBase64 ใช้สำหรับ preview (ยังไม่บีบ) — ใช้ compressImage ตอน upload จริง
     const convertBase64 = (file) => new Promise((resolve, reject) => {
         const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error);
     });
@@ -1268,7 +1296,7 @@ async function handleForgotPassword() {
                 if (error) alert("Save Error: " + error.message);
                 else {
                     if (afterImgUrl) tagData.afterImg = afterImgUrl;
-                    sendToTelegram("✅ *ปิดงานเรียบร้อย*\nID: " + tagData.id + "\n🛠 ผู้ซ่อม: " + tagData.resolver + "\n🔧 แก้ไข: " + tagData.resolution, afterImgUrl);
+                    sendNotification("✅ *ปิดงานเรียบร้อย*\nID: " + tagData.id + "\n🛠 ผู้ซ่อม: " + tagData.resolver + "\n🔧 แก้ไข: " + tagData.resolution, afterImgUrl);
                 }
             }
         } catch (e) { statusEl.classList.add('hidden'); alert("Conn Error: " + e); }
@@ -1288,7 +1316,6 @@ async function handleForgotPassword() {
         return `${prefix}-${machineId}-${String(maxNum + 1).padStart(3, '0')}`;
     }
 
-    // --- Standard Date Formatter (dd/mm/yyyy HH:MM) with BE Year using UTC+7 ---
     function getThaiFormattedDate() {
         const now = new Date();
         const thai = new Date(now.getTime() + (7 * 60 * 60 * 1000));
@@ -1305,7 +1332,6 @@ async function handleForgotPassword() {
         return new Date().toISOString();
     }
 
-    // --- Convert Thai format (dd/mm/yyyy HH:MM) back to ISO UTC format ---
     function convertThaiToISO(thaiDateStr) {
         if (!thaiDateStr || thaiDateStr === '-') return null;
         try {
@@ -1314,46 +1340,28 @@ async function handleForgotPassword() {
             const dateParts = parts[0].split('/');
             const timeParts = parts[1].split(':');
             if (dateParts.length !== 3 || timeParts.length !== 2) return thaiDateStr;
-            const day = parseInt(dateParts[0]);
-            const month = parseInt(dateParts[1]) - 1;
-            const year = parseInt(dateParts[2]) - 543;
-            const hours = parseInt(timeParts[0]);
-            const minutes = parseInt(timeParts[1]);
-            const utc = new Date(Date.UTC(year, month, day, hours - 7, minutes));
+            const utc = new Date(Date.UTC(parseInt(dateParts[2]) - 543, parseInt(dateParts[1]) - 1, parseInt(dateParts[0]), parseInt(timeParts[0]) - 7, parseInt(timeParts[1])));
             return utc.toISOString();
-        } catch (e) {
-            return thaiDateStr;
-        }
+        } catch (e) { return thaiDateStr; }
     }
 
-    // --- Convert any date string to Thai format (dd/mm/yyyy HH:MM) ---
-    // Database เก็บเป็น UTC → แปลงเป็นเวลาไทย (UTC+7) สำหรับแสดงผล
     function formatDateTimeToThai(dateStr) {
         if (!dateStr || dateStr === '-') return dateStr;
         try {
             let d;
             if (typeof dateStr === 'string' && dateStr.includes('T') && !dateStr.includes('+') && !dateStr.endsWith('Z')) {
                 d = new Date(dateStr + 'Z');
-            } else {
-                d = new Date(dateStr);
-            }
+            } else { d = new Date(dateStr); }
             if (isNaN(d.getTime())) return dateStr;
-            
             const thai = new Date(d.getTime() + (7 * 60 * 60 * 1000));
-            
             const day = String(thai.getUTCDate()).padStart(2, '0');
             const month = String(thai.getUTCMonth() + 1).padStart(2, '0');
             const year = thai.getUTCFullYear() + 543;
             const hours = String(thai.getUTCHours()).padStart(2, '0');
             const minutes = String(thai.getUTCMinutes()).padStart(2, '0');
-            
             return `${day}/${month}/${year} ${hours}:${minutes}`;
-        } catch (e) {
-            return dateStr;
-        }
+        } catch (e) { return dateStr; }
     }
-
-    // --- Format date for print: ensures only dd/mm/yyyy HH:MM ---
     function formatPrintDate(dateStr) {
         if (!dateStr || dateStr === '-') return dateStr;
         const match = dateStr.match(/^(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2})/);
@@ -1410,7 +1418,7 @@ async function handleForgotPassword() {
             closeModal('modal-add'); updateUI();
 
             if (currentMode === 'red') {
-                sendToTelegram("🔴 *แจ้งซ่อมด่วน*\nID: " + newId + "\n🤖 เครื่อง: " + currentMachineId + "\n📍 จุด: " + loc + "\n📝 อาการ: " + desc, beforeImgUrl);
+                sendNotification("🔴 *แจ้งซ่อมด่วน*\nID: " + newId + "\n🤖 เครื่อง: " + currentMachineId + "\n📍 จุด: " + loc + "\n📝 อาการ: " + desc, beforeImgUrl);
             }
         } catch (e) { alert("Error: " + e); }
         toggleLoading(false);
@@ -1581,18 +1589,70 @@ async function handleForgotPassword() {
         if(currentUser.role !== 'Admin') return;
         document.getElementById('modal-asset-manager').classList.remove('hidden');
         document.getElementById('modal-asset-manager').classList.add('flex');
+        switchAssetTab('edit');
         if(currentAsset) {
             document.getElementById('manage-asset-id').value = currentAsset.id;
             document.getElementById('manage-asset-name').value = currentAsset.name;
+            renderAssetGallery();
         }
     }
+
+    window.switchAssetTab = (tab) => {
+        const editTab = document.getElementById('asset-tab-edit');
+        const addTab = document.getElementById('asset-tab-add');
+        const editView = document.getElementById('asset-view-edit');
+        const addView = document.getElementById('asset-view-add');
+        if (tab === 'edit') {
+            editView.classList.remove('hidden'); addView.classList.add('hidden');
+            editTab.className = "flex-1 py-2.5 text-sm font-bold text-purple-600 border-b-2 border-purple-600 bg-purple-50 dark:bg-slate-800/50 dark:text-purple-400 dark:border-purple-400 transition-all";
+            addTab.className = "flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all";
+        } else {
+            editView.classList.add('hidden'); addView.classList.remove('hidden');
+            addTab.className = "flex-1 py-2.5 text-sm font-bold text-emerald-600 border-b-2 border-emerald-600 bg-emerald-50 dark:bg-slate-800/50 dark:text-emerald-400 dark:border-emerald-400 transition-all";
+            editTab.className = "flex-1 py-2.5 text-sm font-bold text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all";
+            document.getElementById('new-asset-id').value = '';
+            document.getElementById('new-asset-name').value = '';
+            document.getElementById('new-asset-images').value = '';
+        }
+    };
+
+    function renderAssetGallery() {
+        const gallery = document.getElementById('asset-image-gallery');
+        const countEl = document.getElementById('asset-img-count');
+        if (!currentAsset || !currentAsset.images || currentAsset.images.length === 0) {
+            gallery.innerHTML = '<div class="text-center text-slate-400 text-xs col-span-full py-4">ไม่มีรูปภาพ</div>';
+            countEl.innerText = '0'; return;
+        }
+        countEl.innerText = currentAsset.images.length;
+        gallery.innerHTML = currentAsset.images.map((url, i) => `
+            <div class="relative group rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                <img src="${url}" class="w-full h-20 object-cover" onerror="this.src='https://via.placeholder.com/100x80?text=Error'">
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center">
+                    <button onclick="deleteSingleImage(${i})" class="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-full bg-red-600 text-white text-xs flex items-center justify-center hover:bg-red-700 transition-all shadow-lg"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                </div>
+                <div class="text-[9px] text-center text-slate-400 py-0.5">รูปที่ ${i + 1}</div>
+            </div>`).join('');
+    }
+
+    window.deleteSingleImage = async (index) => {
+        if (!currentAsset) return;
+        if (!confirm(`ยืนยันลบรูปที่ ${index + 1}?`)) return;
+        toggleLoading(true, "กำลังลบรูป...");
+        try {
+            let imgs = [...currentAsset.images];
+            if (index >= 0 && index < imgs.length) { deleteImage(imgs[index]); imgs.splice(index, 1); }
+            const { error } = await sb.from('Assets').update({ ImageURLs: imgs.join(',') }).eq('AssetID', currentAsset.id);
+            toggleLoading(false);
+            if (error) return alert("Error: " + error.message);
+            currentAsset.images = imgs; renderAssetGallery(); updateDisplay();
+        } catch (e) { toggleLoading(false); alert("Error: " + e); }
+    };
 
     window.saveAssetConfig = async () => {
         const id = document.getElementById('manage-asset-id').value;
         const name = document.getElementById('manage-asset-name').value;
         const files = document.getElementById('asset-upload-images').files;
         if(!id || !name) return alert("กรอกข้อมูลให้ครบ");
-
         toggleLoading(true, "กำลังบันทึกเครื่องจักร...");
         try {
             let newUrls = [];
@@ -1601,48 +1661,58 @@ async function handleForgotPassword() {
                 const url = await uploadImage(b64, 'Asset_' + id + '_' + Date.now() + '_' + i + '.jpg', id);
                 if (url) newUrls.push(url);
             }
-
             const currentImgsArr = (currentAsset && currentAsset.images) ? currentAsset.images : [];
             const finalImgs = currentImgsArr.concat(newUrls).filter(x => x && x.trim() !== '');
-            const finalImgStr = finalImgs.join(',');
-
-            const { data: existing } = await sb.from('Assets').select('*').eq('AssetID', id);
-            if (existing && existing.length > 0) {
-                const { error } = await sb.from('Assets').update({ AssetName: name, ImageURLs: finalImgStr }).eq('AssetID', id);
-                toggleLoading(false);
-                if (error) return alert("Error: " + error.message);
-            } else {
-                const { error } = await sb.from('Assets').insert({ AssetID: id, AssetName: name, ImageURLs: finalImgStr });
-                toggleLoading(false);
-                if (error) return alert("Error: " + error.message);
-            }
-            alert("บันทึกสำเร็จ"); closeModal('modal-asset-manager'); location.reload();
+            const { error } = await sb.from('Assets').update({ AssetName: name, ImageURLs: finalImgs.join(',') }).eq('AssetID', id);
+            toggleLoading(false);
+            if (error) return alert("Error: " + error.message);
+            if (currentAsset) { currentAsset.name = name; currentAsset.images = finalImgs; }
+            const opt = document.querySelector(`#machineSelect option[value="${id}"]`);
+            if (opt) opt.text = name;
+            document.getElementById('asset-name-display').innerText = name;
+            document.getElementById('asset-upload-images').value = '';
+            renderAssetGallery(); updateDisplay();
+            alert("✅ บันทึกสำเร็จ");
         } catch (e) { toggleLoading(false); alert("Error: " + e); }
     };
 
-    window.deleteSelectedImages = async () => {
-        const indicesStr = document.getElementById('delete-image-indices').value;
-        if(!indicesStr) return alert("ระบุลำดับรูป");
-        if(!currentAsset) return;
-        const indices = indicesStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
-        if(confirm("ยืนยันลบรูปภาพลำดับที่: " + indices.join(', '))) {
-            toggleLoading(true, "กำลังลบรูป...");
-            try {
-                let currentImages = [...currentAsset.images];
-                const sorted = indices.sort((a, b) => b - a);
-                sorted.forEach(idx => {
-                    if (idx >= 0 && idx < currentImages.length) {
-                        deleteImage(currentImages[idx]);
-                        currentImages.splice(idx, 1);
-                    }
-                });
-                const { error } = await sb.from('Assets').update({ ImageURLs: currentImages.join(',') }).eq('AssetID', currentAsset.id);
-                toggleLoading(false);
-                if (error) return alert("Error: " + error.message);
-                alert("ลบรูปสำเร็จ"); location.reload();
-            } catch (e) { toggleLoading(false); alert("Error: " + e); }
-        }
+    window.addNewAsset = async () => {
+        const id = document.getElementById('new-asset-id').value.trim();
+        const name = document.getElementById('new-asset-name').value.trim();
+        const files = document.getElementById('new-asset-images').files;
+        if (!id || !name) return alert("กรอกรหัสและชื่อเครื่องให้ครบ");
+        if (allAssets.find(a => a.id === id)) return alert("รหัสเครื่อง '" + id + "' มีอยู่แล้ว");
+        toggleLoading(true, "กำลังเพิ่มเครื่องจักรใหม่...");
+        try {
+            let urls = [];
+            for (let i = 0; i < files.length; i++) {
+                const b64 = await compressImage(files[i]);
+                const url = await uploadImage(b64, 'Asset_' + id + '_' + Date.now() + '_' + i + '.jpg', id);
+                if (url) urls.push(url);
+            }
+            const { error } = await sb.from('Assets').insert({ AssetID: id, AssetName: name, ImageURLs: urls.join(',') });
+            toggleLoading(false);
+            if (error) return alert("Error: " + error.message);
+            alert("✅ เพิ่มเครื่องจักรสำเร็จ"); closeModal('modal-asset-manager'); location.reload();
+        } catch (e) { toggleLoading(false); alert("Error: " + e); }
     };
+
+    window.confirmDeleteAsset = async () => {
+        if (!currentAsset) return;
+        const tagCount = tagsData.filter(t => t.machineId === currentAsset.id).length;
+        const msg = tagCount > 0 ? `⚠️ เครื่อง "${currentAsset.name}" มี TAG ${tagCount} รายการ!\nการลบจะลบเฉพาะข้อมูลเครื่อง\nยืนยันลบ?` : `ยืนยันลบเครื่อง "${currentAsset.name}"?`;
+        if (!confirm(msg)) return;
+        toggleLoading(true, "กำลังลบเครื่องจักร...");
+        try {
+            if (currentAsset.images) { for (const url of currentAsset.images) { deleteImage(url); } }
+            const { error } = await sb.from('Assets').delete().eq('AssetID', currentAsset.id);
+            toggleLoading(false);
+            if (error) return alert("Error: " + error.message);
+            alert("✅ ลบเครื่องจักรสำเร็จ"); closeModal('modal-asset-manager'); location.reload();
+        } catch (e) { toggleLoading(false); alert("Error: " + e); }
+    };
+
+    window.deleteSelectedImages = async () => {};
 
     window.openFixModal = (id) => {
         const tag = tagsData.find(t => t.id === id); if (!tag) return;
@@ -1714,9 +1784,15 @@ async function handleForgotPassword() {
             const tbody = document.getElementById('user-list-body'); tbody.innerHTML = '';
             (users || []).forEach(u => {
                 const isSelf = (u.Username === currentUser.username);
-                let roleSelect = isSelf ? `<span class="font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded">Admin (คุณ)</span>` :
-                `<select onchange="changeUserRole('${u.Username}', this.value)" class="bg-white border rounded px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-primary-500 dark:bg-slate-700 dark:text-white"><option value="User" ${u.Role === 'User' ? 'selected' : ''}>User</option><option value="Admin" ${u.Role === 'Admin' ? 'selected' : ''}>Admin</option></select>`;
-                const row = `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b dark:border-slate-800"><td class="p-3 text-slate-700 dark:text-slate-300">${u.Username}</td><td class="p-3 text-slate-700 dark:text-slate-300 font-medium">${u.Name}</td><td class="p-3">${roleSelect}</td></tr>`;
+                let roleSelect = isSelf 
+                    ? `<span class="font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded text-xs">Admin (คุณ)</span>` 
+                    : `<select onchange="changeUserRole('${u.Username}', this.value)" class="bg-white border rounded px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-primary-500 dark:bg-slate-700 dark:text-white"><option value="User" ${u.Role === 'User' ? 'selected' : ''}>User</option><option value="Admin" ${u.Role === 'Admin' ? 'selected' : ''}>Admin</option></select>`;
+                let deleteBtn = isSelf ? '' : `<button onclick="deleteUser('${u.Username}', '${u.Name}')" class="w-7 h-7 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all" title="ลบผู้ใช้"><i class="fa-solid fa-trash text-[10px]"></i></button>`;
+                const row = `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b dark:border-slate-800">
+                    <td class="p-3 text-slate-700 dark:text-slate-300 text-xs">${u.Username}</td>
+                    <td class="p-3 text-slate-700 dark:text-slate-300 font-medium">${u.Name}</td>
+                    <td class="p-3">${roleSelect}</td>
+                    <td class="p-3 text-center">${deleteBtn}</td></tr>`;
                 tbody.insertAdjacentHTML('beforeend', row);
             });
             document.getElementById('modal-users').classList.remove('hidden'); document.getElementById('modal-users').classList.add('flex');
@@ -1724,16 +1800,31 @@ async function handleForgotPassword() {
     }
 
     window.changeUserRole = async (targetUsername, newRole) => {
-        if (!confirm(`ต้องการเปลี่ยนสิทธิ์ของ ${targetUsername} เป็น ${newRole} ใช่หรือไม่?`)) { openUserManagement(); return; }
+        if (!confirm(`ต้องการเปลี่ยนสิทธิ์ของ ${targetUsername} เป็น ${newRole}?`)) { openUserManagement(); return; }
         toggleLoading(true, "กำลังอัปเดตสิทธิ์...");
         try {
             const { error } = await sb.from('Users').update({ Role: newRole }).eq('Username', targetUsername);
             toggleLoading(false);
             if (error) { alert("เกิดข้อผิดพลาด: " + error.message); openUserManagement(); return; }
             if(targetUsername === currentUser.username) { currentUser.role = newRole; showMainApp(); }
+            alert(`✅ เปลี่ยนสิทธิ์ ${targetUsername} เป็น ${newRole} สำเร็จ`);
             openUserManagement();
         } catch (e) { toggleLoading(false); alert("Error: " + e); }
-    }
+    };
+
+    window.deleteUser = async (username, name) => {
+        if (!currentUser || currentUser.role !== 'Admin') return;
+        if (username === currentUser.username) return alert("ไม่สามารถลบตัวเองได้");
+        if (!confirm(`⚠️ ยืนยันลบผู้ใช้ "${name}" (${username})?\nข้อมูลผู้ใช้จะถูกลบถาวร`)) return;
+        toggleLoading(true, "กำลังลบผู้ใช้...");
+        try {
+            const { error } = await sb.from('Users').delete().eq('Username', username);
+            toggleLoading(false);
+            if (error) return alert("ลบไม่สำเร็จ: " + error.message);
+            alert(`✅ ลบผู้ใช้ ${name} สำเร็จ`);
+            openUserManagement();
+        } catch (e) { toggleLoading(false); alert("Error: " + e); }
+    };
 
     // --- HELPERS ---
     window.openHelpModal = () => { document.getElementById('modal-help').classList.remove('hidden'); document.getElementById('modal-help').classList.add('flex'); };
