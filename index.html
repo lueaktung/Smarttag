@@ -465,7 +465,7 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div onclick="openChartModal()" class="cursor-pointer bg-gradient-to-br from-primary-600 to-violet-600 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden card-hover group ring-offset-2 ring-offset-slate-50 dark:ring-offset-slate-900 hover:ring-2 hover:ring-primary-500 transition-all">
                     <div class="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-white/20 transition-all"></div>
                     <div class="relative z-10 flex flex-col h-full justify-between">
@@ -473,10 +473,9 @@
                             <div class="flex justify-between items-start mb-2"><div class="text-xs font-bold uppercase tracking-wider">อัตราการปิดงานรวม</div><i class="fa-solid fa-chart-pie text-white/50 group-hover:text-white"></i></div>
                             <div class="flex items-baseline gap-2"><div class="text-4xl font-extrabold font-['Plus_Jakarta_Sans']" id="stat-total-percent">0%</div><div class="text-xs opacity-80">รวม <span id="stat-total-count">0</span> รายการ</div></div>
                         </div>
-                        <div class="mt-3 grid grid-cols-3 gap-2 border-t border-white/20 pt-3 text-center">
+                        <div class="mt-3 grid grid-cols-2 gap-2 border-t border-white/20 pt-3 text-center">
                             <div><div class="text-[10px] opacity-70 mb-1">⚪ ทั่วไป</div><div class="font-bold text-sm" id="sub-stat-white">0%</div></div>
                             <div class="border-l border-white/10"><div class="text-[10px] opacity-70 mb-1">🔴 เทคนิค</div><div class="font-bold text-sm" id="sub-stat-red">0%</div></div>
-                            <div class="border-l border-white/10"><div class="text-[10px] opacity-70 mb-1">🟡 อันตราย</div><div class="font-bold text-sm" id="sub-stat-yellow">0%</div></div>
                         </div>
                     </div>
                 </div>
@@ -489,11 +488,6 @@
                     <div class="text-slate-400 text-xs font-bold uppercase">เทคนิค</div>
                     <div class="flex justify-between items-end"><div class="text-2xl font-bold" id="stat-red-percent">0%</div><div class="text-xs text-slate-500" id="stat-red-count">0/0</div></div>
                     <div class="w-full bg-red-50 dark:bg-slate-700 rounded-full h-1.5 mt-2"><div class="bg-red-500 h-1.5 rounded-full" id="bar-red" style="width: 0%"></div></div>
-                </div>
-                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-100 dark:border-slate-700 shadow-sm flex flex-col justify-between">
-                    <div class="text-slate-400 text-xs font-bold uppercase">อันตราย</div>
-                    <div class="flex justify-between items-end"><div class="text-2xl font-bold" id="stat-yellow-percent">0%</div><div class="text-xs text-slate-500" id="stat-yellow-count">0/0</div></div>
-                    <div class="w-full bg-yellow-50 dark:bg-slate-700 rounded-full h-1.5 mt-2"><div class="bg-yellow-500 h-1.5 rounded-full" id="bar-yellow" style="width: 0%"></div></div>
                 </div>
             </div>
 
@@ -1179,9 +1173,9 @@ async function handleForgotPassword() {
             tagsData = (data || []).map(r => ({
                 id: r.ID || '', type: r.Type || '', loc: r.Location || '',
                 desc: r.Description || '', reporter: r.Reporter || '',
-                reportTime: r.ReportTime || '', status: r.Status || '',
+                reportTime: formatDateTimeToThai(r.ReportTime) || '', status: r.Status || '',
                 resolver: r.Resolver || '', resolution: r.Resolution || '',
-                fixTime: r.FixTime || '-', beforeImg: r.Before_Image_URL || '',
+                fixTime: formatDateTimeToThai(r.FixTime) || '-', beforeImg: r.Before_Image_URL || '',
                 afterImg: r.After_Image_URL || '', imgIndex: parseInt(r.ImgIndex) || 0,
                 x: r.X !== null ? parseFloat(r.X) : 50, y: r.Y !== null ? parseFloat(r.Y) : 50,
                 machineId: r["Machine ID"] || ''
@@ -1249,6 +1243,25 @@ async function handleForgotPassword() {
         return `${d}/${m}/${y} ${h}:${min}`;
     }
 
+    // --- Convert any date string to Thai format (dd/mm/yyyy HH:MM) ---
+    function formatDateTimeToThai(dateStr) {
+        if (!dateStr || dateStr === '-') return dateStr;
+        try {
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr; // ถ้าแปลงไม่ได้ให้คืนค่าเดิม
+            
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear() + 543;
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            
+            return `${day}/${month}/${year} ${hours}:${minutes}`;
+        } catch (e) {
+            return dateStr; // ถ้า error ให้คืนค่าเดิม
+        }
+    }
+
     // --- INTERACTIONS ---
     document.getElementById('img-wrapper').addEventListener('click', (e) => {
         if (e.target.closest('.tag-pin')) return;
@@ -1296,9 +1309,8 @@ async function handleForgotPassword() {
             });
             closeModal('modal-add'); updateUI();
 
-            if (currentMode === 'red' || currentMode === 'yellow_red') {
-                const icon = currentMode === 'red' ? '🔴' : '🟡🔴';
-                sendToTelegram(icon + " *แจ้งซ่อมด่วน*\nID: " + newId + "\n🤖 เครื่อง: " + currentMachineId + "\n📍 จุด: " + loc + "\n📝 อาการ: " + desc, beforeImgUrl);
+            if (currentMode === 'red') {
+                sendToTelegram("🔴 *แจ้งซ่อมด่วน*\nID: " + newId + "\n🤖 เครื่อง: " + currentMachineId + "\n📍 จุด: " + loc + "\n📝 อาการ: " + desc, beforeImgUrl);
             }
         } catch (e) { alert("Error: " + e); }
         toggleLoading(false);
@@ -1573,8 +1585,6 @@ async function handleForgotPassword() {
         let title = ""; let footerCode = "TPM-104 rev.0"; 
         if(tag.type === 'white') { title = "ข้อบกพร่องทั่วไปที่ได้รับการแก้ไข"; footerCode = "TPM-104 rev.0"; } 
         else if(tag.type === 'red') { title = "ข้อบกพร่องทางเทคนิคที่ได้รับการแก้ไข"; footerCode = "TPM-104S rev.0"; } 
-        else if(tag.type === 'yellow_white') { title = "ข้อบกพร่องอันตรายทั่วไปที่ได้รับการแก้ไข"; footerCode = "TPM-104 rev.0"; } 
-        else { title = "ข้อบกพร่องอันตรายทางเทคนิคที่ได้รับการแก้ไข"; footerCode = "TPM-104S rev.0"; }
             
         document.getElementById('print-title').innerText = title; document.getElementById('print-footer-code').innerText = footerCode; document.getElementById('print-ref').innerText = tag.id;
         const imgB = document.getElementById('print-img-before'); imgB.src = tag.beforeImg || ""; imgB.style.display = tag.beforeImg ? 'block' : 'none'; document.getElementById('print-no-before').style.display = tag.beforeImg ? 'none' : 'block';
@@ -1625,27 +1635,25 @@ async function handleForgotPassword() {
         // อัปเดตปุ่ม desktop
         ['white','red'].forEach(x => {
             const btn = document.getElementById('btn-mode-'+x);
-            if (btn) btn.classList.remove('ring-2','ring-slate-400','ring-red-500','ring-yellow-400','active','shadow-md');
+            if (btn) btn.classList.remove('ring-2','ring-slate-400','ring-red-500','active','shadow-md');
         }); 
         const b = document.getElementById('btn-mode-'+m); 
         if (b) {
             b.classList.add('active','shadow-md'); 
             if(m=='white') b.classList.add('ring-2','ring-slate-400'); 
             else if(m=='red') b.classList.add('ring-2','ring-red-500'); 
-            else b.classList.add('ring-2','ring-yellow-400');
         }
         
         // อัปเดตปุ่ม mobile
         ['white','red'].forEach(x => {
             const btnMobile = document.getElementById('btn-mode-'+x+'-mobile');
-            if (btnMobile) btnMobile.classList.remove('ring-2','ring-slate-400','ring-red-500','ring-yellow-400','active','shadow-md','bg-slate-100','dark:bg-slate-700');
+            if (btnMobile) btnMobile.classList.remove('ring-2','ring-slate-400','ring-red-500','active','shadow-md','bg-slate-100','dark:bg-slate-700');
         }); 
         const bMobile = document.getElementById('btn-mode-'+m+'-mobile'); 
         if (bMobile) {
             bMobile.classList.add('active','shadow-md','bg-slate-100','dark:bg-slate-700'); 
             if(m=='white') bMobile.classList.add('ring-2','ring-slate-400'); 
             else if(m=='red') bMobile.classList.add('ring-2','ring-red-500'); 
-            else bMobile.classList.add('ring-2','ring-yellow-400');
         }
     };
     window.applyFilter = () => { activeFilter = document.getElementById('filter-color').value; renderTables(); renderPins(); };
@@ -1686,14 +1694,8 @@ async function handleForgotPassword() {
         document.getElementById('stat-red-count').innerText = r.count_str; 
         document.getElementById('bar-red').style.width = r.str; 
         
-        const y = 0; // ไม่มี tag อันตราย 
-        document.getElementById('stat-yellow-percent').innerText = y.str; 
-        document.getElementById('stat-yellow-count').innerText = y.count_str; 
-        document.getElementById('bar-yellow').style.width = y.str; 
-        
         document.getElementById('sub-stat-white').innerText = w.str; 
         document.getElementById('sub-stat-red').innerText = r.str; 
-        document.getElementById('sub-stat-yellow').innerText = y.str; 
     }
         
     function renderPins() { 
@@ -1704,10 +1706,8 @@ async function handleForgotPassword() {
             let bgClass = ''; 
             if (tag.type === 'white') bgClass = 'bg-slate-500 text-white'; 
             else if (tag.type === 'red') bgClass = 'bg-red-500 text-white'; 
-            else if (tag.type.includes('yellow')) bgClass = 'bg-yellow-400 text-slate-900'; 
             
             let borderClass = 'border-2 border-white'; 
-            if (tag.type === 'yellow_red') { borderClass = 'border-4 border-red-600'; } 
             
             let statusClass = ''; 
             let iconContent = ''; 
@@ -1718,8 +1718,7 @@ async function handleForgotPassword() {
                 statusClass = 'ring-4 ring-emerald-500 ring-offset-1'; 
                 iconContent = `<div class="flex items-center justify-center"><i class="fa-solid fa-check text-[8px] mr-0.5"></i>${idNum}</div>`; 
             } else { 
-                if (tag.type === 'yellow_red') statusClass = 'danger-tech-pulse'; 
-                else if (tag.type === 'red') statusClass = 'animate-pulse'; 
+                if (tag.type === 'red') statusClass = 'animate-pulse'; 
                 iconContent = `<span>${idNum}</span>`; 
             } 
             
@@ -1744,7 +1743,6 @@ async function handleForgotPassword() {
             let b = ''; 
             if(tag.type==='white') b='<span class="bg-slate-100 text-slate-600 px-2 rounded text-[10px] font-bold">ทั่วไป</span>'; 
             else if(tag.type==='red') b='<span class="bg-red-100 text-red-600 px-2 rounded text-[10px] font-bold">เทคนิค</span>'; 
-            else if(tag.type.includes('yellow')) b='<span class="bg-yellow-100 text-yellow-700 border border-yellow-200 px-2 rounded text-[10px] font-bold">อันตราย</span>'; 
             
             const btnEdit = `<button onclick="openEditModal('${tag.id}')" class="text-xs text-slate-400 hover:text-primary-600 transition-colors mr-1" title="แก้ไขข้อมูล"><i class="fa-solid fa-pen-to-square"></i></button>`;
             const imgIcon = tag.beforeImg ? '<i class="fa-regular fa-image text-slate-400 ml-1"></i>' : ''; 
