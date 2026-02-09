@@ -87,13 +87,19 @@
         .mode-active { opacity: 1 !important; transform: scale(1.05); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); font-weight: 800 !important; }
         .mode-active.white { border-color: #94a3b8; background-color: #f1f5f9; color: #0f172a; }
         .mode-active.red { border-color: #ef4444; background-color: #fef2f2; color: #b91c1c; }
-        .mode-active.yellow_white { border-color: #eab308; background-color: #fefce8; color: #854d0e; }
-        .mode-active.yellow_red { border-color: #f97316; background-color: #fff7ed; color: #c2410c; }
+        
+        
 
         .carousel-btn { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); border: 2px solid rgba(255, 255, 255, 0.2); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; position: absolute; top: 50%; transform: translateY(-50%); z-index: 20; }
         .carousel-btn:hover { background: rgba(59, 130, 246, 0.8); border-color: rgba(255, 255, 255, 0.4); transform: translateY(-50%) scale(1.1); }
         .carousel-btn.left { left: 10px; }
         .carousel-btn.right { right: 10px; }
+        /* ปุ่มหมุนภาพ */
+        .rotate-btn { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); border: 2px solid rgba(255, 255, 255, 0.2); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; position: absolute; bottom: 10px; right: 10px; z-index: 20; }
+        .rotate-btn:hover { background: rgba(59, 130, 246, 0.8); border-color: rgba(255, 255, 255, 0.4); transform: scale(1.1); }
+        
+        .img-preview { transition: transform 0.3s ease; }
+
         
         /* ให้รูปเครื่องจักรมีขนาดคงที่ */
         #target-image {
@@ -499,9 +505,7 @@
                         <div class="grid grid-cols-2 gap-1.5">
                             <button class="px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all shadow-sm bg-white dark:bg-slate-700" onclick="setMode('white')" id="btn-mode-white-mobile">⚪ ทั่วไป</button>
                             <button class="px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all shadow-sm bg-white dark:bg-slate-700" onclick="setMode('red')" id="btn-mode-red-mobile">🔴 เทคนิค</button>
-                            <button class="px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all shadow-sm bg-white dark:bg-slate-700" onclick="setMode('yellow_white')" id="btn-mode-yellow_white-mobile">🟡 อันตราย(ทั่วไป)</button>
-                            <button class="px-2 py-1.5 rounded-lg text-[10px] font-bold border transition-all shadow-sm bg-white dark:bg-slate-700" onclick="setMode('yellow_red')" id="btn-mode-yellow_red-mobile">🟡🔴 อันตราย(เทคนิค)</button>
-                        </div>
+                            </div>
                     </div>
                     
                     <div class="flex-1 xl:flex-1 min-h-[300px] max-h-[400px] xl:max-h-none bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col relative overflow-hidden">
@@ -510,9 +514,7 @@
                             <span class="text-xs font-bold text-slate-400 uppercase mr-1">โหมด Tag:</span>
                             <button class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all" onclick="setMode('white')" id="btn-mode-white">⚪ ทั่วไป</button>
                             <button class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all" onclick="setMode('red')" id="btn-mode-red">🔴 เทคนิค</button>
-                            <button class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all" onclick="setMode('yellow_white')" id="btn-mode-yellow_white">🟡 อันตราย(ทั่วไป)</button>
-                            <button class="px-3 py-1.5 rounded-lg text-xs font-bold border transition-all" onclick="setMode('yellow_red')" id="btn-mode-yellow_red">🟡🔴 อันตราย(เทคนิค)</button>
-                        </div>
+                            </div>
                         
                         <div class="flex-1 relative bg-slate-100 dark:bg-black overflow-hidden flex items-center justify-center cursor-crosshair" id="img-wrapper">
                             <img id="target-image" src="" class="w-full h-full object-contain relative z-0 shadow-2xl">
@@ -546,9 +548,7 @@
                             <option value="all">แสดงทั้งหมด</option>
                             <option value="white">⚪ ทั่วไป</option>
                             <option value="red">🔴 เทคนิค</option>
-                            <option value="yellow_white">🟡 อันตราย (ทั่วไป)</option>
-                            <option value="yellow_red">🟡🔴 อันตราย (เทคนิค)</option>
-                        </select>
+                            </select>
                     </div>
                     <div id="view-active" class="flex-1 overflow-y-auto p-0">
                         <table class="w-full text-left text-sm">
@@ -670,7 +670,12 @@
             <i class="fa-solid fa-camera mr-1"></i>ถ่ายรูป
         </button>
     </div>
-    <img id="preview-add" class="img-preview mt-2">
+    <div class="relative inline-block">
+        <img id="preview-add" class="img-preview mt-2">
+        <div class="rotate-btn" onclick="rotateImage('preview-add')" style="display:none;" id="rotate-preview-add">
+            <i class="fa-solid fa-rotate-right"></i>
+        </div>
+    </div>
 </div>
                 <input type="text" id="add-reporter" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-white" placeholder="ชื่อผู้แจ้ง" readonly>
                 <input type="text" id="add-loc" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-white" placeholder="ตำแหน่งอุปกรณ์">
@@ -689,7 +694,7 @@
             <input type="hidden" id="edit-old-id">
             <div class="space-y-3">
                 <div><label class="text-xs font-bold text-slate-500">รหัส ID</label><input type="text" id="edit-id" class="w-full border rounded-lg px-3 py-2 text-sm font-bold bg-slate-50 dark:bg-slate-800 dark:text-white"></div>
-                <div><label class="text-xs font-bold text-slate-500">ประเภท</label><select id="edit-type" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-white"><option value="white">⚪ ทั่วไป</option><option value="red">🔴 เทคนิค</option><option value="yellow_white">🟡 อันตราย (ทั่วไป)</option><option value="yellow_red">🟡🔴 อันตราย (เทคนิค)</option></select></div>
+                <div><label class="text-xs font-bold text-slate-500">ประเภท</label><select id="edit-type" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-white"><option value="white">⚪ ทั่วไป</option><option value="red">🔴 เทคนิค</option></select></div>
                 <input type="text" id="edit-reporter" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-white" placeholder="ชื่อผู้แจ้ง">
                 <div id="admin-date-fields" style="display:none;">
     <div>
@@ -717,7 +722,12 @@
             <i class="fa-solid fa-camera mr-1"></i>ถ่ายรูป
         </button>
     </div>
-    <img id="preview-edit" class="img-preview mt-2">
+    <div class="relative inline-block">
+        <img id="preview-edit" class="img-preview mt-2">
+        <div class="rotate-btn" onclick="rotateImage('preview-edit')" style="display:none;" id="rotate-preview-edit">
+            <i class="fa-solid fa-rotate-right"></i>
+        </div>
+    </div>
 </div>
                 <div>
     <label class="text-xs font-bold text-slate-500 block mb-1">รูป After (แก้ไขแล้ว)</label>
@@ -727,7 +737,12 @@
             <i class="fa-solid fa-camera mr-1"></i>ถ่ายรูป
         </button>
     </div>
-    <img id="preview-edit-after" class="img-preview mt-2" style="display:none;">
+    <div class="relative inline-block">
+        <img id="preview-edit-after" class="img-preview mt-2" style="display:none;">
+        <div class="rotate-btn" onclick="rotateImage('preview-edit-after')" style="display:none;" id="rotate-preview-edit-after">
+            <i class="fa-solid fa-rotate-right"></i>
+        </div>
+    </div>
 </div>
             </div>
             <div class="flex justify-end gap-2 mt-4">
@@ -754,7 +769,12 @@
             <i class="fa-solid fa-camera mr-1"></i>ถ่ายรูป
         </button>
     </div>
-    <img id="preview-fix" class="img-preview mt-2">
+    <div class="relative inline-block">
+        <img id="preview-fix" class="img-preview mt-2">
+        <div class="rotate-btn" onclick="rotateImage('preview-fix')" style="display:none;" id="rotate-preview-fix">
+            <i class="fa-solid fa-rotate-right"></i>
+        </div>
+    </div>
 </div>
                 <input type="text" id="fix-resolver" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-white" placeholder="ชื่อผู้ซ่อม" readonly>
                 <textarea id="fix-resolution" rows="3" class="w-full border rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-white" placeholder="วิธีการแก้ไข"></textarea>
@@ -825,9 +845,7 @@
                         <option value="all">ทั้งหมด</option>
                         <option value="white">⚪ ทั่วไป</option>
                         <option value="red">🔴 เทคนิค</option>
-                        <option value="yellow_white">🟡 อันตราย (ทั่วไป)</option>
-                        <option value="yellow_red">🟡🔴 อันตราย (เทคนิค)</option>
-                    </select>
+                        </select>
                     <select id="chart-year" onchange="initChart()" class="text-sm border rounded-lg px-3 py-2 bg-slate-50 dark:bg-slate-800 dark:text-white outline-none"></select>
                 </div>
             </div>
@@ -968,8 +986,8 @@
     let currentCompareIndex = 0;
     let currentUser = null;
     let currentMachineId = '', currentAsset = null, allAssets = [];
-    const counters = { white: 1, red: 1, yellow_white: 1, yellow_red: 1 };
-    const idPrefix = { white: 'TAGW', red: 'TAGR', yellow_white: 'TAGYW', yellow_red: 'TAGYR' };
+    const counters = { white: 1, red: 1 };
+    const idPrefix = { white: 'TAGW', red: 'TAGR' };
 
     function validateInput(input) { input.value = input.value.replace(/[^a-zA-Z0-9@._-]/g, ''); }
 
@@ -1605,7 +1623,7 @@ async function handleForgotPassword() {
     window.setMode = (m) => { 
         currentMode = m; 
         // อัปเดตปุ่ม desktop
-        ['white','red','yellow_white','yellow_red'].forEach(x => {
+        ['white','red'].forEach(x => {
             const btn = document.getElementById('btn-mode-'+x);
             if (btn) btn.classList.remove('ring-2','ring-slate-400','ring-red-500','ring-yellow-400','active','shadow-md');
         }); 
@@ -1618,7 +1636,7 @@ async function handleForgotPassword() {
         }
         
         // อัปเดตปุ่ม mobile
-        ['white','red','yellow_white','yellow_red'].forEach(x => {
+        ['white','red'].forEach(x => {
             const btnMobile = document.getElementById('btn-mode-'+x+'-mobile');
             if (btnMobile) btnMobile.classList.remove('ring-2','ring-slate-400','ring-red-500','ring-yellow-400','active','shadow-md','bg-slate-100','dark:bg-slate-700');
         }); 
@@ -1668,7 +1686,7 @@ async function handleForgotPassword() {
         document.getElementById('stat-red-count').innerText = r.count_str; 
         document.getElementById('bar-red').style.width = r.str; 
         
-        const y = calc(['yellow_white', 'yellow_red']); 
+        const y = 0; // ไม่มี tag อันตราย 
         document.getElementById('stat-yellow-percent').innerText = y.str; 
         document.getElementById('stat-yellow-count').innerText = y.count_str; 
         document.getElementById('bar-yellow').style.width = y.str; 
@@ -1888,10 +1906,10 @@ async function handleForgotPassword() {
         chartInstance.render();
     }
 
-    document.getElementById('edit-image').addEventListener('change', async function() { if (this.files[0]) { const b64 = await convertBase64(this.files[0]); document.getElementById('preview-edit').src = b64; document.getElementById('preview-edit').style.display = 'block'; } });
-    document.getElementById('edit-image-after').addEventListener('change', async function() { if (this.files[0]) { const b64 = await convertBase64(this.files[0]); const p = document.getElementById('preview-edit-after'); p.src = b64; p.style.display = 'block'; } });
-    document.getElementById('add-image').addEventListener('change', async function() { if (this.files[0]) { const b64 = await convertBase64(this.files[0]); document.getElementById('preview-add').src = b64; document.getElementById('preview-add').style.display = 'block'; } });
-    document.getElementById('fix-image').addEventListener('change', async function() { if (this.files[0]) { const b64 = await convertBase64(this.files[0]); document.getElementById('preview-fix').src = b64; document.getElementById('preview-fix').style.display = 'block'; } });
+    document.getElementById('edit-image').addEventListener('change', async function() { if (this.files[0]) { const b64 = await convertBase64(this.files[0]); resetRotation('preview-edit'); document.getElementById('preview-edit').src = b64; document.getElementById('preview-edit').style.display = 'block'; document.getElementById('rotate-preview-edit').style.display = 'flex'; } });
+    document.getElementById('edit-image-after').addEventListener('change', async function() { if (this.files[0]) { const b64 = await convertBase64(this.files[0]); resetRotation('preview-edit-after'); const p = document.getElementById('preview-edit-after'); p.src = b64; p.style.display = 'block'; document.getElementById('rotate-preview-edit-after').style.display = 'flex'; } });
+    document.getElementById('add-image').addEventListener('change', async function() { if (this.files[0]) { const b64 = await convertBase64(this.files[0]); resetRotation('preview-add'); document.getElementById('preview-add').src = b64; document.getElementById('preview-add').style.display = 'block'; document.getElementById('rotate-preview-add').style.display = 'flex'; } });
+    document.getElementById('fix-image').addEventListener('change', async function() { if (this.files[0]) { const b64 = await convertBase64(this.files[0]); resetRotation('preview-fix'); document.getElementById('preview-fix').src = b64; document.getElementById('preview-fix').style.display = 'block'; document.getElementById('rotate-preview-fix').style.display = 'flex'; } });
     // ========== CAMERA FUNCTIONS ==========
 let cameraStream = null;
 let currentTargetInputId = null;
