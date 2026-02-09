@@ -1205,7 +1205,13 @@ async function handleForgotPassword() {
                 if (tagData.afterImg && tagData.afterImg.includes('base64,')) {
                     afterImgUrl = await uploadImage(tagData.afterImg, tagData.id + '_after.png', folderName);
                 }
-                const updateData = { Status: 'Fixed', Resolver: tagData.resolver, Resolution: tagData.resolution, FixTime: tagData.fixTime };
+                // ใช้ fixTimeISO สำหรับบันทึกลง database
+                const updateData = { 
+                    Status: 'Fixed', 
+                    Resolver: tagData.resolver, 
+                    Resolution: tagData.resolution, 
+                    FixTime: tagData.fixTimeISO || tagData.fixTime // ใช้ ISO ถ้ามี ไม่งั้นใช้ fixTime
+                };
                 if (afterImgUrl) updateData.After_Image_URL = afterImgUrl;
                 const { error } = await sb.from('repair_jobs').update(updateData).eq('ID', tagData.id);
                 statusEl.classList.add('hidden');
@@ -1241,6 +1247,37 @@ async function handleForgotPassword() {
         const h = String(now.getHours()).padStart(2, '0');
         const min = String(now.getMinutes()).padStart(2, '0');
         return `${d}/${m}/${y} ${h}:${min}`;
+    }
+
+    // --- Get current datetime in ISO format for database ---
+    function getISODateTime() {
+        return new Date().toISOString();
+    }
+
+    // --- Convert Thai format (dd/mm/yyyy HH:MM) back to ISO format ---
+    function convertThaiToISO(thaiDateStr) {
+        if (!thaiDateStr || thaiDateStr === '-') return null;
+        try {
+            // รูปแบบ: 09/02/2569 11:38
+            const parts = thaiDateStr.split(' ');
+            if (parts.length !== 2) return thaiDateStr; // ถ้าไม่ใช่รูปแบบที่คาดหวัง
+            
+            const dateParts = parts[0].split('/'); // [09, 02, 2569]
+            const timeParts = parts[1].split(':'); // [11, 38]
+            
+            if (dateParts.length !== 3 || timeParts.length !== 2) return thaiDateStr;
+            
+            const day = parseInt(dateParts[0]);
+            const month = parseInt(dateParts[1]) - 1; // JavaScript month is 0-indexed
+            const year = parseInt(dateParts[2]) - 543; // แปลง พ.ศ. เป็น ค.ศ.
+            const hours = parseInt(timeParts[0]);
+            const minutes = parseInt(timeParts[1]);
+            
+            const date = new Date(year, month, day, hours, minutes);
+            return date.toISOString();
+        } catch (e) {
+            return thaiDateStr; // ถ้า error คืนค่าเดิม
+        }
     }
 
     // --- Convert any date string to Thai format (dd/mm/yyyy HH:MM) ---
@@ -1284,13 +1321,14 @@ async function handleForgotPassword() {
         const b64 = file ? await convertBase64(file) : "";
         
         const newId = generateNextId(currentMode, currentMachineId);
-        const reportTimeFormatted = getThaiFormattedDate();
+        const reportTimeISO = getISODateTime(); // ISO format สำหรับ database
+        const reportTimeDisplay = formatDateTimeToThai(reportTimeISO); // Thai format สำหรับแสดงผล
         const folderName = currentMachineId || 'Uncategorized';
         const beforeImgUrl = await uploadImage(b64, newId + '_before.png', folderName);
 
         const insertData = {
             ID: newId, Type: currentMode, Location: loc, Description: desc,
-            Reporter: currentUser.name, ReportTime: reportTimeFormatted,
+            Reporter: currentUser.name, ReportTime: reportTimeISO, // บันทึกเป็น ISO
             Status: 'Open', Resolver: '-', Resolution: '-', FixTime: null,
             Before_Image_URL: beforeImgUrl, After_Image_URL: '',
             ImgIndex: currentImgIndex, X: parseFloat(tempX.toFixed(2)), Y: parseFloat(tempY.toFixed(2)),
@@ -1303,7 +1341,7 @@ async function handleForgotPassword() {
 
             tagsData.push({
                 id: newId, machineId: currentMachineId, type: currentMode,
-                loc, desc, reporter: currentUser.name, reportTime: reportTimeFormatted,
+                loc, desc, reporter: currentUser.name, reportTime: reportTimeDisplay, // แสดงเป็น Thai format
                 status: 'Open', imgIndex: currentImgIndex, x: tempX, y: tempY,
                 beforeImg: beforeImgUrl, afterImg: '', resolver: '-', resolution: '-', fixTime: '-'
             });
@@ -1326,8 +1364,10 @@ async function handleForgotPassword() {
             let afterImg = null; if(document.getElementById('fix-image').files[0]) afterImg = await convertBase64(document.getElementById('fix-image').files[0]);
             tag.status = 'Fixed'; tag.resolver = resolver; tag.resolution = resolution; 
             
-            // FIX: Use new date format function
-            tag.fixTime = getThaiFormattedDate(); 
+            // บันทึกเวลาทั้ง ISO (สำหรับ DB) และ Thai format (สำหรับแสดงผล)
+            const fixTimeISO = getISODateTime();
+            tag.fixTime = formatDateTimeToThai(fixTimeISO); // แสดงผลเป็นไทย
+            tag.fixTimeISO = fixTimeISO; // เก็บไว้ส่งไป database
             
             tag.afterImg = afterImg;
             sendToGoogleSheet(tag, 'update');
@@ -1425,8 +1465,14 @@ async function handleForgotPassword() {
     if (currentUser && currentUser.role === 'Admin') {
         const reportTimeEl = document.getElementById('edit-report-time');
         const fixTimeEl = document.getElementById('edit-fix-time');
-        if(reportTimeEl) reportTime = reportTimeEl.value.trim() || null;
-        if(fixTimeEl) fixTime = fixTimeEl.value.trim() || null;
+        if(reportTimeEl) {
+            const reportTimeValue = reportTimeEl.value.trim();
+            reportTime = reportTimeValue ? convertThaiToISO(reportTimeValue) : null;
+        }
+        if(fixTimeEl) {
+            const fixTimeValue = fixTimeEl.value.trim();
+            fixTime = fixTimeValue ? convertThaiToISO(fixTimeValue) : null;
+        }
     }
 
     const statusEl = document.getElementById('sync-status');
@@ -1459,8 +1505,9 @@ async function handleForgotPassword() {
             tag.id = newId; tag.type = type; tag.reporter = reporter; tag.loc = loc; tag.desc = desc;
             if (updateData.Before_Image_URL) tag.beforeImg = updateData.Before_Image_URL;
             if (updateData.After_Image_URL) tag.afterImg = updateData.After_Image_URL;
-            if (reportTime) tag.reportTime = reportTime;
-            if (fixTime) tag.fixTime = fixTime;
+            // แปลงกลับเป็นรูปแบบไทยสำหรับแสดงผล
+            if (reportTime) tag.reportTime = formatDateTimeToThai(reportTime);
+            if (fixTime) tag.fixTime = formatDateTimeToThai(fixTime);
         }
         closeModal('modal-edit'); updateUI();
         alert("✅ แก้ไขข้อมูลเรียบร้อย");
