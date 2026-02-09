@@ -423,8 +423,8 @@
                         <i class="fa-solid fa-tags mr-2"></i><span class="hidden md:inline">Smart-TAG</span>
                     </div>
                     <div class="flex items-center gap-2 ml-1 md:ml-4">
-                        <i class="fa-solid fa-server text-slate-400 text-xs"></i>
-                        <select id="machineSelect" onchange="changeMachine()" class="text-xs md:text-sm bg-slate-100 dark:bg-slate-800 px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-bold border-none outline-none focus:ring-2 focus:ring-primary-500 max-w-[200px] md:max-w-none truncate"></select>
+                        <i class="fa-solid fa-server text-slate-400 text-xs hidden md:inline"></i>
+                        <select id="machineSelect" onchange="changeMachine()" class="text-xs md:text-sm bg-slate-100 dark:bg-slate-800 px-2 md:px-3 py-1 md:py-1.5 rounded-lg font-bold border-none outline-none focus:ring-2 focus:ring-primary-500 max-w-[180px] md:max-w-none truncate"></select>
                     </div>
                 </div>
             </div>
@@ -1184,6 +1184,56 @@ async function handleForgotPassword() {
         } catch (e) { toggleLoading(false); alert("Load Failed: " + e); }
     }
 
+    // --- บีบอัดรูปก่อน upload: resize max 1200px, JPEG quality 0.7 ---
+    // ลดจาก ~4-8MB เหลือ ~100-300KB
+    const IMG_MAX_SIZE = 1200; // px (ด้านยาวสุด)
+    const IMG_QUALITY = 0.7;   // JPEG quality (0.0 - 1.0)
+
+    function compressImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = reject;
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onerror = () => reject(new Error('Image load failed'));
+                img.onload = () => {
+                    let w = img.width;
+                    let h = img.height;
+
+                    // Resize ถ้าด้านใดด้านหนึ่งเกิน max
+                    if (w > IMG_MAX_SIZE || h > IMG_MAX_SIZE) {
+                        if (w > h) {
+                            h = Math.round(h * IMG_MAX_SIZE / w);
+                            w = IMG_MAX_SIZE;
+                        } else {
+                            w = Math.round(w * IMG_MAX_SIZE / h);
+                            h = IMG_MAX_SIZE;
+                        }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    // แปลงเป็น JPEG เสมอ (ประหยัดกว่า PNG มาก)
+                    const compressed = canvas.toDataURL('image/jpeg', IMG_QUALITY);
+                    
+                    // Log ขนาดที่ประหยัดได้
+                    const originalKB = Math.round(e.target.result.length * 0.75 / 1024);
+                    const compressedKB = Math.round(compressed.length * 0.75 / 1024);
+                    console.log(`📦 Compress: ${originalKB}KB → ${compressedKB}KB (${img.width}x${img.height} → ${w}x${h})`);
+
+                    resolve(compressed);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // convertBase64 ใช้สำหรับ preview (ยังไม่บีบ) — ใช้ compressImage ตอน upload จริง
     const convertBase64 = (file) => new Promise((resolve, reject) => {
         const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = () => resolve(reader.result); reader.onerror = error => reject(error);
     });
@@ -1203,7 +1253,7 @@ async function handleForgotPassword() {
                 const folderName = tagData.machineId || 'Uncategorized';
                 let afterImgUrl = '';
                 if (tagData.afterImg && tagData.afterImg.includes('base64,')) {
-                    afterImgUrl = await uploadImage(tagData.afterImg, tagData.id + '_after.png', folderName);
+                    afterImgUrl = await uploadImage(tagData.afterImg, tagData.id + '_after.jpg', folderName);
                 }
                 // ใช้ fixTimeISO สำหรับบันทึกลง database
                 const updateData = { 
@@ -1238,14 +1288,15 @@ async function handleForgotPassword() {
         return `${prefix}-${machineId}-${String(maxNum + 1).padStart(3, '0')}`;
     }
 
-    // --- NEW: Standard Date Formatter (dd/mm/yyyy HH:MM) with BE Year ---
+    // --- Standard Date Formatter (dd/mm/yyyy HH:MM) with BE Year using UTC+7 ---
     function getThaiFormattedDate() {
         const now = new Date();
-        const d = String(now.getDate()).padStart(2, '0');
-        const m = String(now.getMonth() + 1).padStart(2, '0');
-        const y = now.getFullYear() + 543;
-        const h = String(now.getHours()).padStart(2, '0');
-        const min = String(now.getMinutes()).padStart(2, '0');
+        const thai = new Date(now.getTime() + (7 * 60 * 60 * 1000));
+        const d = String(thai.getUTCDate()).padStart(2, '0');
+        const m = String(thai.getUTCMonth() + 1).padStart(2, '0');
+        const y = thai.getUTCFullYear() + 543;
+        const h = String(thai.getUTCHours()).padStart(2, '0');
+        const min = String(thai.getUTCMinutes()).padStart(2, '0');
         return `${d}/${m}/${y} ${h}:${min}`;
     }
 
@@ -1254,58 +1305,59 @@ async function handleForgotPassword() {
         return new Date().toISOString();
     }
 
-    // --- Convert Thai format (dd/mm/yyyy HH:MM) back to ISO format ---
+    // --- Convert Thai format (dd/mm/yyyy HH:MM) back to ISO UTC format ---
     function convertThaiToISO(thaiDateStr) {
         if (!thaiDateStr || thaiDateStr === '-') return null;
         try {
-            // รูปแบบ: 09/02/2569 11:38
             const parts = thaiDateStr.split(' ');
-            if (parts.length !== 2) return thaiDateStr; // ถ้าไม่ใช่รูปแบบที่คาดหวัง
-            
-            const dateParts = parts[0].split('/'); // [09, 02, 2569]
-            const timeParts = parts[1].split(':'); // [11, 38]
-            
+            if (parts.length !== 2) return thaiDateStr;
+            const dateParts = parts[0].split('/');
+            const timeParts = parts[1].split(':');
             if (dateParts.length !== 3 || timeParts.length !== 2) return thaiDateStr;
-            
             const day = parseInt(dateParts[0]);
-            const month = parseInt(dateParts[1]) - 1; // JavaScript month is 0-indexed
-            const year = parseInt(dateParts[2]) - 543; // แปลง พ.ศ. เป็น ค.ศ.
+            const month = parseInt(dateParts[1]) - 1;
+            const year = parseInt(dateParts[2]) - 543;
             const hours = parseInt(timeParts[0]);
             const minutes = parseInt(timeParts[1]);
-            
-            const date = new Date(year, month, day, hours, minutes);
-            return date.toISOString();
+            const utc = new Date(Date.UTC(year, month, day, hours - 7, minutes));
+            return utc.toISOString();
         } catch (e) {
-            return thaiDateStr; // ถ้า error คืนค่าเดิม
+            return thaiDateStr;
         }
     }
 
     // --- Convert any date string to Thai format (dd/mm/yyyy HH:MM) ---
+    // Database เก็บเป็น UTC → แปลงเป็นเวลาไทย (UTC+7) สำหรับแสดงผล
     function formatDateTimeToThai(dateStr) {
         if (!dateStr || dateStr === '-') return dateStr;
         try {
-            const d = new Date(dateStr);
-            if (isNaN(d.getTime())) return dateStr; // ถ้าแปลงไม่ได้ให้คืนค่าเดิม
+            let d;
+            if (typeof dateStr === 'string' && dateStr.includes('T') && !dateStr.includes('+') && !dateStr.endsWith('Z')) {
+                d = new Date(dateStr + 'Z');
+            } else {
+                d = new Date(dateStr);
+            }
+            if (isNaN(d.getTime())) return dateStr;
             
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = d.getFullYear() + 543;
-            const hours = String(d.getHours()).padStart(2, '0');
-            const minutes = String(d.getMinutes()).padStart(2, '0');
+            const thai = new Date(d.getTime() + (7 * 60 * 60 * 1000));
+            
+            const day = String(thai.getUTCDate()).padStart(2, '0');
+            const month = String(thai.getUTCMonth() + 1).padStart(2, '0');
+            const year = thai.getUTCFullYear() + 543;
+            const hours = String(thai.getUTCHours()).padStart(2, '0');
+            const minutes = String(thai.getUTCMinutes()).padStart(2, '0');
             
             return `${day}/${month}/${year} ${hours}:${minutes}`;
         } catch (e) {
-            return dateStr; // ถ้า error ให้คืนค่าเดิม
+            return dateStr;
         }
     }
 
-    // --- Format date for print: ensures only dd/mm/yyyy HH:MM (no seconds, no extra info) ---
+    // --- Format date for print: ensures only dd/mm/yyyy HH:MM ---
     function formatPrintDate(dateStr) {
         if (!dateStr || dateStr === '-') return dateStr;
-        // ถ้าเป็นรูปแบบ dd/mm/yyyy HH:MM อยู่แล้ว ก็ตัดให้เหลือแค่นั้น
         const match = dateStr.match(/^(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2})/);
         if (match) return `${match[1]} ${match[2]}`;
-        // ถ้าเป็น ISO หรือรูปแบบอื่น ก็แปลงใหม่
         return formatDateTimeToThai(dateStr);
     }
 
@@ -1328,13 +1380,13 @@ async function handleForgotPassword() {
         if(!loc || !desc) return alert("กรอกข้อมูลให้ครบ");
 
         toggleLoading(true, "กำลังบันทึก...");
-        const b64 = file ? await convertBase64(file) : "";
+        const b64 = file ? await compressImage(file) : "";
         
         const newId = generateNextId(currentMode, currentMachineId);
         const reportTimeISO = getISODateTime(); // ISO format สำหรับ database
         const reportTimeDisplay = formatDateTimeToThai(reportTimeISO); // Thai format สำหรับแสดงผล
         const folderName = currentMachineId || 'Uncategorized';
-        const beforeImgUrl = await uploadImage(b64, newId + '_before.png', folderName);
+        const beforeImgUrl = await uploadImage(b64, newId + '_before.jpg', folderName);
 
         const insertData = {
             ID: newId, Type: currentMode, Location: loc, Description: desc,
@@ -1371,7 +1423,7 @@ async function handleForgotPassword() {
         if(!resolver || !resolution) return alert("กรุณาระบุข้อมูล");
         const tag = tagsData.find(t => t.id === id);
         if(tag) {
-            let afterImg = null; if(document.getElementById('fix-image').files[0]) afterImg = await convertBase64(document.getElementById('fix-image').files[0]);
+            let afterImg = null; if(document.getElementById('fix-image').files[0]) afterImg = await compressImage(document.getElementById('fix-image').files[0]);
             tag.status = 'Fixed'; tag.resolver = resolver; tag.resolution = resolution; 
             
             // บันทึกเวลาทั้ง ISO (สำหรับ DB) และ Thai format (สำหรับแสดงผล)
@@ -1495,15 +1547,15 @@ async function handleForgotPassword() {
         if (fixTime) updateData.FixTime = fixTime;
 
         if (imgFile) {
-            const b64 = await convertBase64(imgFile);
+            const b64 = await compressImage(imgFile);
             if (tag && tag.beforeImg) deleteImage(tag.beforeImg);
-            const bUrl = await uploadImage(b64, newId + '_before_fixed.png', folderName);
+            const bUrl = await uploadImage(b64, newId + '_before_fixed.jpg', folderName);
             if (bUrl) updateData.Before_Image_URL = bUrl;
         }
         if (imgFileAfter) {
-            const b64 = await convertBase64(imgFileAfter);
+            const b64 = await compressImage(imgFileAfter);
             if (tag && tag.afterImg) deleteImage(tag.afterImg);
-            const aUrl = await uploadImage(b64, newId + '_after_fixed.png', folderName);
+            const aUrl = await uploadImage(b64, newId + '_after_fixed.jpg', folderName);
             if (aUrl) updateData.After_Image_URL = aUrl;
         }
 
@@ -1545,8 +1597,8 @@ async function handleForgotPassword() {
         try {
             let newUrls = [];
             for (let i = 0; i < files.length; i++) {
-                const b64 = await convertBase64(files[i]);
-                const url = await uploadImage(b64, 'Asset_' + id + '_' + Date.now() + '_' + i + '.png', id);
+                const b64 = await compressImage(files[i]);
+                const url = await uploadImage(b64, 'Asset_' + id + '_' + Date.now() + '_' + i + '.jpg', id);
                 if (url) newUrls.push(url);
             }
 
