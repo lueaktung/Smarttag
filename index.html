@@ -986,8 +986,12 @@
     }
 
     // ==========================================
-    // 📢 LINE OA (Messaging API) via Server Route
+    // 📢 Telegram + LINE OA (via Server Route)
     // ==========================================
+    async function sendToTelegram(message, imageUrl) {
+        try { await fetch('/api/telegram', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message, imageUrl }) }); } catch (e) { console.warn('Telegram:', e); }
+    }
+
     async function sendLineOA(message, imageUrl) {
         try {
             const resp = await fetch('/api/line', {
@@ -1000,8 +1004,9 @@
         } catch (e) { console.warn('LINE OA:', e); }
     }
 
-    // ส่งแจ้งเตือน (เฉพาะ TAG แดง)
+    // ส่งแจ้งเตือนทุกช่องทาง (เฉพาะ TAG แดง)
     async function sendNotification(message, imageUrl) {
+        sendToTelegram(message, imageUrl);
         sendLineOA(message, imageUrl);
     }
 
@@ -1281,7 +1286,6 @@ async function handleForgotPassword() {
                 if (error) alert("Save Error: " + error.message);
                 else {
                     if (afterImgUrl) tagData.afterImg = afterImgUrl;
-                    // แจ้งเตือนปิดงานเฉพาะ TAG แดง
                     if (tagData.type === 'red') {
                         sendNotification("✅ ปิดงานเรียบร้อย\nID: " + tagData.id + "\n🛠 ผู้ซ่อม: " + tagData.resolver + "\n🔧 แก้ไข: " + tagData.resolution, afterImgUrl);
                     }
@@ -2092,16 +2096,13 @@ async function handleForgotPassword() {
         chartInstance.render();
     }
 
-    // --- Image Rotation Functions ---
+    // --- Image Rotation ---
     const imageRotations = {};
-    
     function rotateImage(imgId) {
-        const img = document.getElementById(imgId);
-        if (!img) return;
+        const img = document.getElementById(imgId); if (!img) return;
         imageRotations[imgId] = ((imageRotations[imgId] || 0) + 90) % 360;
         img.style.transform = `rotate(${imageRotations[imgId]}deg)`;
     }
-
     function resetRotation(imgId) {
         imageRotations[imgId] = 0;
         const img = document.getElementById(imgId);
