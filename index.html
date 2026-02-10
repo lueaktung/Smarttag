@@ -200,8 +200,8 @@
             @page { size: A4 landscape; margin: 0; }
             body * { visibility: hidden; }
             body { background: white; margin: 0; padding: 0; }
-            #print-area, #print-area *, .print-page-clone, .print-page-clone * { visibility: visible; }
-            #print-area, .print-page-clone { position: relative; left: 0; top: 0; width: 297mm; height: 210mm; background: white; color: black; padding: 10mm; box-sizing: border-box; font-family: 'Sarabun', sans-serif; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; break-after: page; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: fixed; left: 0; top: 0; width: 297mm; height: 210mm; background: white; color: black; padding: 10mm; box-sizing: border-box; font-family: 'Sarabun', sans-serif; display: flex; flex-direction: column; justify-content: space-between; }
             .print-content-wrapper { flex-grow: 1; }
             .print-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; border-bottom: none; padding-bottom: 0; }
             .print-logo-img { height: 55px; object-fit: contain; } 
@@ -216,8 +216,8 @@
             .print-footer-static { font-size: 10px; font-weight: bold; color: #333; text-align: left; margin-top: 5px; }
             button, select, #btn-admin-panel { display: none !important; }
         }
-        #print-area, .print-page-clone { display: none; }
-        @media print { #print-area, .print-page-clone { display: flex; } }
+        #print-area { display: none; }
+        @media print { #print-area { display: flex; } }
         
         .auth-bg { 
             background: #111827; 
@@ -798,8 +798,7 @@
                     <button onclick="switchCompareResult(1)" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors"><i class="fa-solid fa-chevron-right"></i></button>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="printForm()" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 text-sm font-bold flex items-center gap-2"><i class="fa-solid fa-print"></i> พิมพ์</button>
-                    <button onclick="printAllTags()" class="px-3 py-1 bg-blue-100 hover:bg-blue-200 rounded text-blue-700 text-sm font-bold flex items-center gap-2"><i class="fa-solid fa-print"></i> พิมพ์ทั้งหมด</button>
+                    <button onclick="printForm()" class="px-3 py-1 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 text-sm font-bold flex items-center gap-2"><i class="fa-solid fa-print"></i> พิมพ์ PDF</button>
                     <button onclick="closeModal('modal-compare')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </div>
@@ -987,38 +986,21 @@
     }
 
     // ==========================================
-    // 📢 LINE OA Messaging API
+    // 📢 LINE OA (Messaging API) via Server Route
     // ==========================================
-    const LINE_OA_TOKEN = '1zglfjM9Pls0CZpEqTJ5k7/KMkcXnokSDpUwiocCIQpD4HGt0arhfEQlE0rqHbmgi4OufBWkMiwwB2pep7/PKQNsdS5Ss4bXYdBldvWBQXHRA0scdStytpW0JTkhFddQFjk++kAmJ6ZF6tglAq9WjgdB04t89/1O/w1cDnyilFU=';
-    const LINE_GROUP_ID = 'Ce35a8177f013e44e9c08ed446eefb415';
-
     async function sendLineOA(message, imageUrl) {
-        if (!LINE_OA_TOKEN) return;
         try {
-            const messages = [{ type: 'text', text: message }];
-            if (imageUrl) {
-                messages.push({
-                    type: 'image',
-                    originalContentUrl: imageUrl,
-                    previewImageUrl: imageUrl
-                });
-            }
-            await fetch('https://api.line.me/v2/bot/message/push', {
+            const resp = await fetch('/api/line', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + LINE_OA_TOKEN
-                },
-                body: JSON.stringify({
-                    to: LINE_GROUP_ID,
-                    messages: messages
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message, imageUrl })
             });
-            console.log('✅ LINE OA sent');
+            if (resp.ok) console.log('✅ LINE OA sent');
+            else console.warn('LINE OA error:', await resp.text());
         } catch (e) { console.warn('LINE OA:', e); }
     }
 
-    // ส่งแจ้งเตือน (เฉพาะ TAG แดงเท่านั้น)
+    // ส่งแจ้งเตือน (เฉพาะ TAG แดง)
     async function sendNotification(message, imageUrl) {
         sendLineOA(message, imageUrl);
     }
@@ -1765,92 +1747,18 @@ async function handleForgotPassword() {
         if(tag.status === 'Fixed' && tag.afterImg) { i2.src = tag.afterImg; i2.classList.remove('hidden'); n2.classList.add('hidden'); } else { i2.classList.add('hidden'); n2.classList.remove('hidden'); n2.innerText = "(รอการแก้ไข)"; }
     }
 
-    // --- Fill print template for a single tag ---
-    function fillPrintTemplate(tag) {
+    window.printForm = () => {
+        const tag = tagsData.find(t => t.id === currentPrintId); if(!tag) return;
         let title = ""; let footerCode = "TPM-104 rev.0"; 
         if(tag.type === 'white') { title = "ข้อบกพร่องทั่วไปที่ได้รับการแก้ไข"; footerCode = "TPM-104 rev.0"; } 
         else if(tag.type === 'red') { title = "ข้อบกพร่องทางเทคนิคที่ได้รับการแก้ไข"; footerCode = "TPM-104S rev.0"; } 
             
         document.getElementById('print-title').innerText = title; document.getElementById('print-footer-code').innerText = footerCode; document.getElementById('print-ref').innerText = tag.id;
-        // เติมข้อมูลเครื่องจักร
-        const asset = allAssets.find(a => a.id === tag.machineId);
-        document.getElementById('print-group-name').innerText = asset ? asset.name : (tag.machineId || '-');
-        document.getElementById('print-machine-name').innerText = asset ? asset.name : (tag.machineId || '-');
-        document.getElementById('print-machine-id').innerText = tag.machineId || '-';
-        
         const imgB = document.getElementById('print-img-before'); imgB.src = tag.beforeImg || ""; imgB.style.display = tag.beforeImg ? 'block' : 'none'; document.getElementById('print-no-before').style.display = tag.beforeImg ? 'none' : 'block';
         const imgA = document.getElementById('print-img-after'); imgA.src = tag.afterImg || ""; imgA.style.display = tag.afterImg ? 'block' : 'none'; document.getElementById('print-no-after').style.display = tag.afterImg ? 'none' : 'block';
-        document.getElementById('print-problem').innerText = tag.desc; document.getElementById('print-solution').innerText = tag.resolution || '-'; document.getElementById('print-loc').innerText = tag.loc;
-        document.getElementById('print-finder').innerText = tag.reporter; document.getElementById('print-date-found').innerText = formatPrintDate(tag.reportTime); document.getElementById('print-fixer').innerText = tag.resolver || '-'; document.getElementById('print-date-fixed').innerText = formatPrintDate(tag.fixTime);
-    }
-
-    window.printForm = () => {
-        const tag = tagsData.find(t => t.id === currentPrintId); if(!tag) return;
-        // ลบ page เก่าทิ้ง ถ้ามี multi-page
-        document.querySelectorAll('.print-page-clone').forEach(el => el.remove());
-        fillPrintTemplate(tag);
+        document.getElementById('print-problem').innerText = tag.desc; document.getElementById('print-solution').innerText = tag.resolution; document.getElementById('print-loc').innerText = tag.loc;
+        document.getElementById('print-finder').innerText = tag.reporter; document.getElementById('print-date-found').innerText = formatPrintDate(tag.reportTime); document.getElementById('print-fixer').innerText = tag.resolver; document.getElementById('print-date-fixed').innerText = formatPrintDate(tag.fixTime);
         window.print();
-    };
-
-    window.printAllTags = () => {
-        // กรอง tag ที่ Fixed ของเครื่องปัจจุบัน (หรือ list ที่กำลังดูอยู่)
-        const tagsToPrint = navigationList.length > 0 ? navigationList : tagsData.filter(t => t.status === 'Fixed' && t.machineId === currentMachineId);
-        if (tagsToPrint.length === 0) return alert("ไม่มีรายการที่จะพิมพ์");
-        if (!confirm(`พิมพ์ทั้งหมด ${tagsToPrint.length} รายการ?`)) return;
-
-        // ลบ page clone เก่า
-        document.querySelectorAll('.print-page-clone').forEach(el => el.remove());
-
-        // Fill หน้าแรก
-        fillPrintTemplate(tagsToPrint[0]);
-
-        // Clone print-area สำหรับหน้า 2+
-        const printArea = document.getElementById('print-area');
-        for (let i = 1; i < tagsToPrint.length; i++) {
-            const tag = tagsToPrint[i];
-            const clone = printArea.cloneNode(true);
-            clone.removeAttribute('id');
-            clone.classList.add('print-page-clone');
-            
-            let title = ""; let footerCode = "TPM-104 rev.0";
-            if(tag.type === 'white') { title = "ข้อบกพร่องทั่วไปที่ได้รับการแก้ไข"; footerCode = "TPM-104 rev.0"; }
-            else if(tag.type === 'red') { title = "ข้อบกพร่องทางเทคนิคที่ได้รับการแก้ไข"; footerCode = "TPM-104S rev.0"; }
-            
-            const asset = allAssets.find(a => a.id === tag.machineId);
-            clone.querySelector('.print-header .print-title').innerText = title;
-            clone.querySelector('.print-footer-static').innerText = footerCode;
-            
-            // ใช้ querySelectorAll กับ class/structure
-            const tds = clone.querySelectorAll('td span, td div');
-            // เติมข้อมูลผ่าน id ที่ clone มา (ใช้ querySelector ใน clone)
-            const setText = (sel, val) => { const el = clone.querySelector(sel); if(el) el.innerText = val; };
-            setText('#print-ref', tag.id);
-            setText('#print-group-name', asset ? asset.name : (tag.machineId || '-'));
-            setText('#print-machine-name', asset ? asset.name : (tag.machineId || '-'));
-            setText('#print-machine-id', tag.machineId || '-');
-            setText('#print-problem', tag.desc);
-            setText('#print-solution', tag.resolution || '-');
-            setText('#print-loc', tag.loc);
-            setText('#print-finder', tag.reporter);
-            setText('#print-date-found', formatPrintDate(tag.reportTime));
-            setText('#print-fixer', tag.resolver || '-');
-            setText('#print-date-fixed', formatPrintDate(tag.fixTime));
-            
-            const imgB = clone.querySelector('#print-img-before');
-            const imgA = clone.querySelector('#print-img-after');
-            if(imgB) { imgB.src = tag.beforeImg || ''; imgB.style.display = tag.beforeImg ? 'block' : 'none'; }
-            if(imgA) { imgA.src = tag.afterImg || ''; imgA.style.display = tag.afterImg ? 'block' : 'none'; }
-            const noB = clone.querySelector('#print-no-before');
-            const noA = clone.querySelector('#print-no-after');
-            if(noB) noB.style.display = tag.beforeImg ? 'none' : 'block';
-            if(noA) noA.style.display = tag.afterImg ? 'none' : 'block';
-            
-            printArea.parentNode.insertBefore(clone, printArea.nextSibling);
-        }
-        
-        window.print();
-        // ลบ clone หลังปริ้น (delay เล็กน้อย)
-        setTimeout(() => { document.querySelectorAll('.print-page-clone').forEach(el => el.remove()); }, 2000);
     };
 
     // --- ADMIN: User Management ---
@@ -1864,18 +1772,13 @@ async function handleForgotPassword() {
             const tbody = document.getElementById('user-list-body'); tbody.innerHTML = '';
             (users || []).forEach(u => {
                 const isSelf = (u.Username === currentUser.username);
-                const escapedName = u.Name.replace(/'/g, "\\'");
-                
-                // ชื่อ - แก้ไขได้ด้วยปุ่ม edit
-                let nameCell = `<span id="name-display-${u.Username}">${u.Name}</span> <button onclick="editUserName('${u.Username}', '${escapedName}')" class="text-slate-400 hover:text-blue-500 ml-1" title="แก้ไขชื่อ"><i class="fa-solid fa-pen text-[10px]"></i></button>`;
-                
                 let roleSelect = isSelf 
                     ? `<span class="font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded text-xs">Admin (คุณ)</span>` 
                     : `<select onchange="changeUserRole('${u.Username}', this.value)" class="bg-white border rounded px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-primary-500 dark:bg-slate-700 dark:text-white"><option value="User" ${u.Role === 'User' ? 'selected' : ''}>User</option><option value="Admin" ${u.Role === 'Admin' ? 'selected' : ''}>Admin</option></select>`;
-                let deleteBtn = isSelf ? '' : `<button onclick="deleteUser('${u.Username}', '${escapedName}')" class="w-7 h-7 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all" title="ลบผู้ใช้"><i class="fa-solid fa-trash text-[10px]"></i></button>`;
+                let deleteBtn = isSelf ? '' : `<button onclick="deleteUser('${u.Username}', '${u.Name}')" class="w-7 h-7 rounded-full bg-red-50 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all" title="ลบผู้ใช้"><i class="fa-solid fa-trash text-[10px]"></i></button>`;
                 const row = `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800 border-b dark:border-slate-800">
                     <td class="p-3 text-slate-700 dark:text-slate-300 text-xs">${u.Username}</td>
-                    <td class="p-3 text-slate-700 dark:text-slate-300 font-medium">${nameCell}</td>
+                    <td class="p-3 text-slate-700 dark:text-slate-300 font-medium">${u.Name}</td>
                     <td class="p-3">${roleSelect}</td>
                     <td class="p-3 text-center">${deleteBtn}</td></tr>`;
                 tbody.insertAdjacentHTML('beforeend', row);
@@ -1883,24 +1786,6 @@ async function handleForgotPassword() {
             document.getElementById('modal-users').classList.remove('hidden'); document.getElementById('modal-users').classList.add('flex');
         } catch (e) { toggleLoading(false); alert("Error: " + e); }
     }
-
-    window.editUserName = async (username, currentName) => {
-        const newName = prompt(`แก้ไขชื่อของ ${username}:`, currentName);
-        if (!newName || newName.trim() === '' || newName === currentName) return;
-        toggleLoading(true, "กำลังอัปเดตชื่อ...");
-        try {
-            const { error } = await sb.from('Users').update({ Name: newName.trim() }).eq('Username', username);
-            toggleLoading(false);
-            if (error) return alert("เกิดข้อผิดพลาด: " + error.message);
-            // อัปเดต currentUser ถ้าแก้ชื่อตัวเอง
-            if (username === currentUser.username) {
-                currentUser.name = newName.trim();
-                document.getElementById('user-display-name').innerText = newName.trim();
-            }
-            alert(`✅ เปลี่ยนชื่อเป็น "${newName.trim()}" สำเร็จ`);
-            openUserManagement();
-        } catch (e) { toggleLoading(false); alert("Error: " + e); }
-    };
 
     window.changeUserRole = async (targetUsername, newRole) => {
         if (!confirm(`ต้องการเปลี่ยนสิทธิ์ของ ${targetUsername} เป็น ${newRole}?`)) { openUserManagement(); return; }
@@ -2205,6 +2090,22 @@ async function handleForgotPassword() {
         if (chartInstance) chartInstance.destroy();
         chartInstance = new ApexCharts(document.querySelector("#chart-container"), opt);
         chartInstance.render();
+    }
+
+    // --- Image Rotation Functions ---
+    const imageRotations = {};
+    
+    function rotateImage(imgId) {
+        const img = document.getElementById(imgId);
+        if (!img) return;
+        imageRotations[imgId] = ((imageRotations[imgId] || 0) + 90) % 360;
+        img.style.transform = `rotate(${imageRotations[imgId]}deg)`;
+    }
+
+    function resetRotation(imgId) {
+        imageRotations[imgId] = 0;
+        const img = document.getElementById(imgId);
+        if (img) img.style.transform = 'rotate(0deg)';
     }
 
     document.getElementById('edit-image').addEventListener('change', async function() { if (this.files[0]) { const b64 = await convertBase64(this.files[0]); resetRotation('preview-edit'); document.getElementById('preview-edit').src = b64; document.getElementById('preview-edit').style.display = 'block'; document.getElementById('rotate-preview-edit').style.display = 'flex'; } });
